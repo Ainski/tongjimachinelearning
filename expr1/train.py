@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def create_theta(x_list):
     global theta
     theta=np.ones(len(x_list)+1)
@@ -62,3 +63,5 @@ def calculate_mse(x_test,y_test,theta,is_normalized=False):
     print(y_means)
     print(y_true)
     return mse
+regression_choices=["ridge_regression_train","linear_regression_train"]
+regression_functions=[ridge_regression_train,linear_regression_train]

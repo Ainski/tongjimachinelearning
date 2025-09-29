@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from train import *
 from PyQt5 import QtCore
+from download import title
 class ScatterPlotWindow(QMainWindow):
     '''
     散点图窗口类，支持通过下拉菜单切换X轴数据列
@@ -80,9 +81,10 @@ class ScatterPlotWindow(QMainWindow):
         初始化UI
         :return:
         '''
-        self.regressionchoices=["ridge_regression_train","linear_regression_train"]
+        self.regressionchoices=regression_choices
+        self.regressionfunctions=regression_functions
         self.current_regre=self.regressionchoices[0]
-        self.setWindowTitle("网店销售额预测")
+        self.setWindowTitle(title)
         self.setGeometry(100,100,800,600)
         
         # 中央控件
@@ -245,12 +247,14 @@ class ScatterPlotWindow(QMainWindow):
             self.info_label.setText(f"模型均方误差为：{calculate_mse(self.x_test,self.y_true,self.theta,is_normalized=True)}")
             return
         try:
-            if self.current_regre == 'linear_regression_train':
-                self.theta,self.done,self.current_iter=(
-                    linear_regression_train(X,y,self.theta,self.current_iter,self.max_iters))
-            else:
-                self.theta,self.done,self.current_iter=(
-                    ridge_regression_train(X,y,self.theta,self.current_iter,self.max_iters,alpha=0.5))
+            # if self.current_regre == 'linear_regression_train':
+            #     self.theta,self.done,self.current_iter=(
+            #         linear_regression_train(X,y,self.theta,self.current_iter,self.max_iters))
+            # else:
+            #     self.theta,self.done,self.current_iter=(
+            #         ridge_regression_train(X,y,self.theta,self.current_iter,self.max_iters))
+            self.theta,self.done,self.current_iter=(
+                self.regressionfunctions[regression_choices.index(self.current_regre)](X,y,self.theta,self.current_iter,self.max_iters))
             self.info_label.setText(
                 f"{self.current_regre} 迭代:{self.current_iter} "
                 f"收敛:{self.done}"
