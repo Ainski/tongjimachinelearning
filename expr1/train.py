@@ -38,7 +38,7 @@ def linear_regression_train(X,y,theta=None,iter=0,max_iter=1000,lr=0.01):
     done = np.linalg.norm(gradient) < 1e-6 or iter >= max_iter#判断是否收敛
     return theta,done,iter
 
-def ridge_regression_train(X, y,theta=None,iter=0,max_iter=1000,lr=0.01, alpha=0.5):
+def ridge_regression_train(X, y,theta=None,iter=0,max_iter=1000,lr=0.01, alpha=0.1):
 
     theta,done,iter=linear_regression_train(X,y,theta,iter,max_iter,lr)
     theta[1:]-=alpha*lr*theta[1:]#正则化
@@ -63,5 +63,11 @@ def calculate_mse(x_test,y_test,theta,is_normalized=False):
     print(y_means)
     print(y_true)
     return mse
-regression_choices=["ridge_regression_train","linear_regression_train"]
-regression_functions=[ridge_regression_train,linear_regression_train]
+
+def lasso_regression_train(X, y,theta=None,iter=0,max_iter=1000,lr=0.01, alpha=0.1):
+    theta,done,iter=linear_regression_train(X,y,theta,iter,max_iter,lr)
+    theta[1:]-=alpha*np.sign(theta[1:])*lr#正则化
+    return theta,done,iter
+regression_choices=["linear_regression_train","ridge_regression_train","lasso_regression_train"]
+regression_functions=[linear_regression_train,ridge_regression_train,lasso_regression_train]
+

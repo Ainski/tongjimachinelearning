@@ -237,14 +237,16 @@ class ScatterPlotWindow(QMainWindow):
         self.timer=QtCore.QTimer()
         
         self.timer.timeout.connect(lambda:self.train_step(X,y))
-        self.timer.start(100)
+        self.timer.start(1)
         
         self.info_label.setText(f"开始训练({self.current_regre}) 迭代:0")
     def train_step(self,X,y):
         self.show_regre_result=True
         if self.done:
             self.timer.stop()
-            self.info_label.setText(f"模型均方误差为：{calculate_mse(self.x_test,self.y_true,self.theta,is_normalized=True)}")
+            mse_result=calculate_mse(self.x_test,self.y_true,self.theta,is_normalized=True)
+            self.info_label.setText(f"模型均方误差为：{mse_result:.2f}")
+            print(f"模型均方误差为：{mse_result:.2f}")
             return
         try:
             # if self.current_regre == 'linear_regression_train':
