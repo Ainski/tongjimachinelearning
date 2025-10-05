@@ -216,9 +216,9 @@ __marimo__/
 .streamlit/secrets.toml
 
 
-document/expr1/
-!document/expr1/bib/
-!document/expr1/figures/
-!document/expr1/sections/
-!document/expr1/style/
-!document/expr1/main.tex
+/document/expr1/
+!/document/expr1/bib/
+!/document/expr1/figures/
+!/document/expr1/sections/
+!/document/expr1/style/
+!/document/expr1/main.tex
