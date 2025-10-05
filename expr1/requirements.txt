@@ -1,6 +1,0 @@
-pandas~=2.3.2
-numpy~=2.3.3
-datasets~=4.1.1
-matplotlib~=3.10.6
-PyQt5~=5.15.11
-kagglehub~=0.3.13
