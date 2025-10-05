@@ -1,0 +1,61 @@
+\section{可视化交互界面（View模块）设计与实现}
+View模块作为实验系统的用户交互核心，基于PyQt5与Matplotlib构建了兼具数据可视化与模型控制功能的图形界面。该模块通过面向对象设计封装了界面布局、交互逻辑与实时绘图功能，实现了特征选择、回归算法切换、数据预处理、模型训练及结果可视化的一体化操作。其核心实现机制如下：
+
+\subsection{类结构与核心属性设计}
+\par 界面功能通过ScatterPlotWindow类（继承自PyQt5的QMainWindow）实现，该类封装了界面元素、数据状态与交互方法，关键属性包括：
+\par 数据存储：x\_data（特征数据，DataFrame）、y\_data（目标变量，Series）、x\_test/y\_test（测试集数据）及预处理参数（x\_means/x\_stds/y\_means/y\_stds）；
+\par 界面状态：当前选中特征（current\_feature）、当前回归算法（current\_regre）、模型参数（theta）及训练状态标识（show\_regre\_result）；
+\par  可视化组件：Matplotlib的Figure与FigureCanvas用于绘图，PyQt5的QComboBox/QPushButton/QLabel构成控制面板。
+
+类的初始化方法（\_\_init\_\_）通过接收特征数据、目标变量、特征名称列表等参数完成初始状态设置，并调用init\_ui()构建界面、connect\_signals()绑定交互逻辑、update\_plot()绘制初始散点图。
+
+\subsection{界面布局与控件组织}
+界面采用“控制面板+绘图区域”的垂直布局（QVBoxLayout），各组件层次分明且功能独立：
+\par  \textbf{信息提示区}：顶部QLabel（info\_label）用于显示系统状态（如“数据预处理完成”“训练失败：xxx”）；
+\par  \textbf{控制交互区}：水平布局（QHBoxLayout）包含4个核心控件：
+\begin{itemize}
+  \item 特征选择下拉框（combo\_box）：加载feature\_names列表，支持用户切换X轴显示的特征；
+  \item  预处理按钮（preprocess\_btn）：点击触发run\_preprocess()方法，执行数据标准化并更新绘图；
+  \item 回归算法下拉框（regre\_combo）：加载regression\_choices列表（如线性回归、岭回归等），支持算法切换；
+  \item  训练按钮（rerges\_execute\_btn）：点击触发run\_regre()方法，启动模型训练流程；
+\end{itemize}
+
+\par  \textbf{绘图显示区}：占界面主体的FigureCanvas，用于渲染散点图与回归曲线，通过setSizePolicy设置为可扩展布局，适配窗口大小变化。
+
+\subsection{信号与槽机制：交互逻辑实现}
+模块基于PyQt5的信号-槽（Signal-Slot）机制实现用户操作与程序响应的解耦，核心信号与绑定关系如下：
+\par  特征选择信号（feature\_changed）：当combo\_box选择变化时，通过on\_feature\_changed方法发射信号，触发on\_feature\_update更新当前特征并调用update\_plot()重绘；
+\par 算法选择信号（regre\_changed）：当regre\_combo选择变化时，通过on\_regre\_changed方法发射信号，触发on\_regre\_update更新当前算法；
+\par  按钮点击事件：预处理按钮绑定run\_preprocess()，训练按钮绑定run\_regre()，实现对应功能的触发。
+
+这种设计使界面交互逻辑清晰可扩展，新增控件时只需添加相应信号与槽函数即可。
+
+\subsection{核心功能实现流程}
+
+\subsubsection{数据预处理与状态更新}
+点击“执行数据预处理”按钮后，run\_preprocess()方法调用preprocess\_data函数对x\_data和y\_data执行标准化（基于均值与标准差），并将处理后的数据、统计参数（x\_means等）保存为类属性。预处理完成后，通过update\_plot()刷新散点图，并在info\_label显示状态提示；若失败则捕获异常并显示错误信息。
+
+\subsubsection{模型训练与实时可视化}
+点击“执行回归”按钮后，run\_regre()方法初始化模型参数（theta）、迭代计数器（current\_iter）与收敛标识（done），并构建含偏置项的特征矩阵X。随后启动QTimer定时器，每100ms触发一次train\_step()方法，实现以下流程：
+\par 调用当前选中的回归算法（通过regression\_functions映射获取对应函数）执行参数更新；
+\par  更新迭代次数与收敛状态，并在info\_label显示实时训练信息；
+\par  调用update\_plot()重绘界面，此时show\_regre\_result为True，触发回归曲线绘制；
+\par  当满足收敛条件（done=True）时，停止定时器，计算并显示测试集MSE（调用calculate\_mse）。
+
+\subsubsection{动态绘图逻辑}
+update\_plot()方法是可视化核心，负责根据当前状态绘制散点图与回归曲线：
+\par 清除当前绘图区（self.figure.clear()），创建子图并绘制特征与目标变量的散点图（蓝色点，带黑色边缘）；
+\par 若训练完成（show\_regre\_result=True），则基于当前theta绘制回归曲线：
+\begin{itemize}
+   \item 生成X轴预测区间（x\_pred），其他特征固定为均值；
+   \item 构建扩展特征矩阵（含偏置项），计算预测值y\_pred；
+   \item 绘制红色回归直线，并添加图例（显示回归方程$y = \theta_0 + \theta_i x$）；
+\end{itemize}
+\par  设置坐标轴标签、标题与网格线，通过canvas.draw()刷新绘图。
+
+\subsection{关键技术特点}
+\par  \textbf{实时交互性}：通过QTimer实现100ms级的训练过程可视化，用户可直观观察参数更新对回归曲线的影响；
+\par  \textbf{状态一致性}：所有操作（如特征切换、算法变更）均通过修改类属性并调用update\_plot()保证界面与数据状态一致；
+\par  \textbf{功能模块化}：预处理、训练、绘图等功能封装为独立方法，便于维护与扩展（如新增回归算法只需扩展regression\_choices与regression\_functions）。
+
+该模块通过将PyQt5的交互框架与Matplotlib的可视化能力结合，为回归模型的训练过程提供了直观、可操作的界面支持，降低了算法调试与结果分析的门槛。

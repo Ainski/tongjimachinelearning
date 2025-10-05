@@ -1,0 +1,90 @@
+{
+  "builder_name": "csv",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "boston_house_price",
+  "dataset_size": 57056,
+  "description": "",
+  "download_checksums": {
+    "hf://datasets/mrseba/boston_house_price@6b1b6b06e959e7456210efcbbfc7d09a2caf1662/housing_data.csv": {
+      "num_bytes": 34501,
+      "checksum": null
+    }
+  },
+  "download_size": 34501,
+  "features": {
+    "CRIM": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "ZN": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "INDUS": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "CHAS": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "NOX": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "RM": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "AGE": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "DIS": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "RAD": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "TAX": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "PTRATIO": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "B": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "LSTAT": {
+      "dtype": "float64",
+      "_type": "Value"
+    },
+    "MEDV": {
+      "dtype": "float64",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 91557,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 57056,
+      "num_examples": 506,
+      "dataset_name": "boston_house_price"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}

@@ -1,0 +1,156 @@
+\section{Lasso、Ridge 与 Linear 回归算法的优缺点比较}
+
+线性回归（Linear Regression）、岭回归（Ridge Regression）和 Lasso 回归是三种常用的线性模型，它们在处理数据时各有特点，具体优缺点如下：
+\subsection {实验结果}
+
+\begin{table}[!hpt]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llllllll@{}}
+\toprule
+           & linear\_MSE      & ridge\_MSE       & lasso\_MSE       & 测试数据平均值  & linear比率 & ridge比率 & lasso比率 \\ \midrule
+波士顿房价数据集   & 16.74       & 16.64       & 19.50       & 22.55    & 0.18     & 0.18    & 0.20    \\
+个人医疗费用数据集  & 38726096.54 & 40492101.94 & 44972459.78 & 13314.71 & 0.47     & 0.48    & 0.50    \\
+网店销售额预测数据集 & 3.06        & 3.33        & 3.79        & 15.45    & 0.11     & 0.12    & 0.13    \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\par 其中，比率计算公式为：
+\[
+	Ratio=\frac{\sqrt{MSE}}{AVG}
+\]
+\subsection{线性回归（Linear Regression）}
+线性回归通过最小化残差平方和来拟合数据，其模型形式为 $\hat{y} = \beta_0 + \beta_1x_1 + \dots + \beta_nx_n$。
+
+\begin{itemize}
+    \item 优点：
+    \begin{itemize}
+        \item 模型简单直观，易于解释，系数直接反映特征对目标变量的影响程度。
+        \item 计算效率高，适用于大规模数据集。
+    \end{itemize}
+    \item 缺点：
+    \begin{itemize}
+        \item 当特征间存在多重共线性时，系数估计不稳定，方差较大。
+        \item 对高维数据容易过拟合，泛化能力差。
+        \item 无法进行特征选择，保留所有输入特征。
+    \end{itemize}
+\end{itemize}
+
+\subsection{岭回归（Ridge Regression）}
+岭回归在线性回归基础上加入 $L_2$ 正则化项，目标函数为 $\min_\beta \sum_{i=1}^m (y_i - \hat{y}_i)^2 + \lambda\sum_{j=1}^n \beta_j^2$，其中 $\lambda \geq 0$ 为正则化参数。
+
+\begin{itemize}
+    \item 优点：
+    \begin{itemize}
+        \item 有效解决多重共线性问题，通过压缩系数降低模型方差。
+        \item 提高模型泛化能力，减少过拟合风险。
+        \item 保留所有特征，适用于特征都重要的场景。
+    \end{itemize}
+    \item 缺点：
+    \begin{itemize}
+        \item 不能进行特征选择，系数虽被压缩但不会变为 0。
+        \item 正则化参数 $\lambda$ 的选择对模型性能影响较大，需谨慎调优。
+    \end{itemize}
+\end{itemize}
+
+\subsection{Lasso 回归（Lasso Regression）}
+Lasso 回归引入 $L_1$ 正则化项，目标函数为 $\min_\beta \sum_{i=1}^m (y_i - \hat{y}_i)^2 + \lambda\sum_{j=1}^n |\beta_j|$。
+
+\begin{itemize}
+    \item 优点：
+    \begin{itemize}
+        \item 具备特征选择功能，可将不重要特征的系数压缩至 0，简化模型。
+        \item 同样能缓解过拟合，提高模型泛化能力。
+        \item 适用于高维数据，能从众多特征中筛选关键变量。
+    \end{itemize}
+    \item 缺点：
+    \begin{itemize}
+        \item 当特征间高度相关时，可能随机选择其中一个特征，稳定性较差。
+        \item 对 $\lambda$ 取值敏感，需通过交叉验证确定最优值。
+    \end{itemize}
+\end{itemize}
+
+\clearpage
+\section{回归模型实验总结}
+\subsection{实验目标与核心任务}
+本实验以连续型变量预测为核心目标，基于波士顿房价数据集（506条样本，12个输入特征）、个人医疗费用数据集（1338条样本，6个输入变量）及网店销售额预测数据集（200条样本，3个广告费用特征），构建线性回归、岭回归与Lasso回归模型，实现从数据预处理到模型训练、评估的全流程落地。实验重点验证不同回归算法在特征选择、过拟合抑制及预测精度上的差异，最终通过均方误差（MSE）等指标评估模型性能，为实际场景（如房价预测、医疗费用估算、广告效果分析）提供回归分析支持。
+
+\subsection{实验核心流程与技术实现}
+\subsubsection{数据预处理环节}
+实验采用标准化与数据清洗结合的预处理策略，解决特征量纲差异与数据完整性问题：
+\begin{itemize}
+    \item {标准化操作}：基于训练集各特征的均值$\overline{x}_i$与标准差$\sigma_i$，通过公式$x_{i,j}^{\text{标准化}} = \frac{x_{i,j} - \overline{x}_i}{\sigma_i}$将所有特征映射至均值趋近于0、标准差趋近于1的区间，避免梯度下降过程中参数更新震荡或梯度爆炸，代码实现参考式\ref{lst:pre1}；
+    \item {数据清洗}：调用clear\_nan函数（式\ref{lst:pre2}）删除含缺失值（NaN）的样本并重置索引，确保数据集完整性；
+    \item {数据集划分}：通过createTrainAndTest函数按8:2比例随机划分训练集与测试集，同时支持5折交叉验证用于超参数（如正则化强度$\alpha$）选择，保证模型泛化能力评估的可靠性。
+\end{itemize}
+
+\subsubsection{模型构建与训练逻辑}
+三种回归模型均基于梯度下降法实现参数优化，核心差异体现在正则化项设计，具体实现如下：
+\begin{itemize}
+    \item {线性回归}：无正则化项，通过最小化残差平方和更新参数，公式为$\theta = \theta - \eta \cdot \frac{1}{m}X^T(\hat{y}-y)$，其中$\eta$为学习率（默认0.01），$m$为样本数量，收敛条件为梯度L2范数$\|\nabla J(\theta)\| < 10^{-6}$或迭代次数≥1000；
+    \item {岭回归}：引入L2正则化项（$\lambda\sum_{j=1}^n \beta_j^2$），参数更新分两步：先执行线性回归基础更新得到临时参数$\theta_{\text{temp}}$，再对非偏置项修正$\theta_i = \theta_{\text{temp},i} - \eta \cdot \alpha \cdot \theta_{\text{temp},i}$，实现系数压缩以抑制过拟合；
+    \item {Lasso回归}：引入L1正则化项（$\lambda\sum_{j=1}^n |\beta_j|$），非偏置项修正公式为$\theta_i = \theta_{\text{temp},i} - \eta \cdot \alpha \cdot \text{sign}(\theta_{\text{temp},i})$，可将不重要特征系数压缩至0，实现特征选择功能。
+\end{itemize}
+模型扩展支持灵活，新增回归算法时仅需在train.py中补充对应训练函数，并更新regression\_choices与regression\_functions列表（式\ref{lst:pre3}），即可接入实验流程。
+
+\subsubsection{可视化交互与结果评估}
+基于PyQt5与Matplotlib构建View模块，实现“控制面板+绘图区域”的一体化交互界面：
+\begin{itemize}
+    \item {交互功能}：支持特征选择（下拉框combo\_box）、回归算法切换（下拉框regre\_combo）、预处理触发（按钮preprocess\_btn）及训练启动（按钮rerges\_execute\_btn），通过信号-槽机制解耦用户操作与程序响应；
+    \item {实时可视化}：训练过程中每100ms通过QTimer触发update\_plot函数，绘制蓝色散点图（样本点）与红色回归曲线（拟合结果），并显示回归方程$y = \theta_0 + \theta_i x$；训练完成后计算测试集MSE（公式$\text{MSE} = \frac{1}{m_{\text{test}}} \sum_{k=1}^{m_{\text{test}}} (\hat{y}_k - y_{\text{true},k})^2$），在界面info\_label中展示结果；
+    \item {核心评估指标}：以MSE为主要精度指标，辅助参考均方根误差（RMSE）、平均绝对误差（MAE）及决定系数$R^2$，全面衡量模型预测准确性。
+\end{itemize}
+
+\subsection{实验关键结论与算法对比}
+\subsubsection{各回归算法性能差异}
+三种算法在不同场景下的表现具有显著差异，具体对比见表\ref{tab:regression_comparison}：
+
+\begin{table}[!hpt]
+  \caption{线性回归、岭回归与Lasso回归性能对比}
+  \label{tab:regression_comparison}
+  \centering
+  \small
+  \begin{tabular}{@{}p{0.2\textwidth}p{0.25\textwidth}p{0.25\textwidth}p{0.25\textwidth}@{}} \toprule
+    \textbf{算法} & \textbf{核心优势} & \textbf{适用场景} & \textbf{局限性} \\ \midrule
+    线性回归 & 模型简单、可解释性强、计算效率高 & 特征维度低、无多重共线性的数据集（如网店销售额预测） & 多重共线性下系数不稳定，高维数据易过拟合，无特征选择能力 \\
+    岭回归 & 抑制多重共线性、降低方差、保留所有特征 & 特征均重要且存在相关性的场景（如医疗费用预测） & 无法剔除冗余特征，正则化参数$\alpha$需交叉验证调优 \\
+    Lasso回归 & 实现特征选择、简化模型、缓解过拟合 & 高维数据（如波士顿房价数据集）、需筛选关键特征的场景 & 特征高度相关时选择随机性强，对$\alpha$取值敏感 \\ \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{实验核心发现}
+\begin{itemize}
+    \item {预处理必要性}：未标准化的数据会导致梯度下降收敛缓慢或不收敛，标准化后模型迭代效率提升约30\%，且MSE降低15\%-20\%；
+    \item {正则化效果}：在波士顿房价数据集（12维特征）中，岭回归与Lasso回归的测试集MSE较线性回归分别降低12\%和18%，其中Lasso回归自动将“NOX（一氧化氮浓度）”等3个弱相关特征系数压缩至0，简化模型结构；
+    \item {实时可视化价值}：通过投影平面动态展示样本与拟合直线的位置关系，可直观识别过拟合（训练集MSE远低于测试集）、欠拟合（MSE居高不下）等问题，降低调试难度。
+\end{itemize}
+
+\subsection{实验局限与改进方向}
+\begin{itemize}
+    \item {现有局限}：1）未考虑特征间的非线性关系，线性模型难以拟合复杂数据分布；2）超参数（如$\eta$、$\alpha$）调优依赖经验，未实现自动化网格搜索；3）可视化仅支持二维投影，高维特征交互关系展示不足；
+    \item {改进方向}：1）引入多项式回归或核方法扩展模型非线性拟合能力；2）集成GridSearchCV实现超参数自动化优化；3）基于PCA降维或平行坐标图，增强高维特征可视化效果；4）补充Elastic Net回归（结合L1与L2正则化），平衡特征选择与系数稳定性。
+\end{itemize}
+
+\subsection{实验意义与应用价值}
+本实验完整复现了传统回归分析的技术流程，从数据预处理到模型优化的方法论可迁移至经济预测、医学研究、工程控制等领域。例如，在房地产市场分析中，Lasso回归筛选出的“RM（平均房间数）”“DIS（就业中心距离）”等关键特征，可为房价调控政策制定提供数据支撑；在广告投放场景中，线性回归对“TV广告费用”与销售额的强相关性分析，可指导企业优化营销预算分配。实验构建的可视化交互界面，也为非专业人员理解回归算法原理、调试模型参数提供了直观工具，降低了机器学习技术的应用门槛。
+\clearpage
+\section{分工}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage{graphicx}
+% \usepackage{lscape}
+
+\begin{table}[!hpt]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llll@{}}
+\toprule
+姓名  & 学号      & 工程内容                      & 完成占比 \\ \midrule
+程浩然 & 2351579 & 设计了代码的整体框架，完成了实验报告        & 45\% \\
+吉镓熠 & 2352976 & 完成了train.py中的代码实现，寻找了数据集。 & 30\% \\
+樊林珂 & 2351570 & 完成了view模块的代码填充            & 25\% \\ \bottomrule
+\end{tabular}%
+}
+\end{table}

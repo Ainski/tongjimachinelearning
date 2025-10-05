@@ -1,0 +1,209 @@
+\section{数据准备}
+\subsection{变量说明}
+本实验中训练的模型表达式为：
+\[
+    y = \boldsymbol{\theta}_{1 \times (I+1)} \cdot \begin{bmatrix} \boldsymbol{X} \\ 1 \end{bmatrix}
+\]
+
+其中各变量定义如下：
+\begin{itemize}
+\item 输入向量 $\boldsymbol{X}_{I \times J} = \{x_{i}^{j}\}$：表示整体训练数据集，包含 $J$ 个样本，每个样本有 $I$ 个特征。$x_{i,j}$ 表示第 $j$ 个样本的第 $i$ 个特征值。
+
+\item 输入向量 $\boldsymbol{x}_{I \times 1}$：表示单个样本的输入特征向量。
+
+\item  模型参数 $\boldsymbol{\theta}_{1 \times (I+1)}$：表示待训练的系数向量，维度为 $1 \times (I+1)$（包含偏置项）。
+
+\end{itemize}
+
+
+\subsection {数据预处理过程}
+\subsubsection{5折交叉分析}
+\begin{lstlisting}[
+  language=Python,         % 指定语法高亮的编程语言
+  caption={5折交叉划分数据集},
+  label=lst:pre1,
+  frame=single,            % 添加单线边框
+  basicstyle=\small\ttfamily, % 设置字体为等宽小号字体
+  numbers=left,            % 显示行号
+  numberstyle=\tiny,       % 行号使用极小字体
+  backgroundcolor=\color{bg}, % 设置背景色
+  commentstyle=\color{commentcolor}\itshape, % 注释样式
+  keywordstyle=\color{keywordcolor}\bfseries, % 关键字样式
+  stringstyle=\color{stringcolor}, % 字符串样式
+  breaklines=true,         % 允许自动换行
+  showstringspaces=false   % 不显示字符串中的空格
+]
+def createTrainAndTest(XRaw,YRaw,train_size=0.8,random_state=42):
+	if random_state is not None:
+		np.random.seed(random_state)
+	
+	n_samples = XRaw.shape[0]
+	'''
+	shape[0] 表示行数（即样本数量，对应代码中的n_samples）；
+	shape[1] 表示列数（即特征数量）。
+	'''
+	
+	n_train = int(train_size * n_samples)
+	indices = np.random.permutation(n_samples)
+	
+	train_indices = indices[:n_train]
+	test_indices = indices[n_train:]
+	
+	X_train = XRaw.iloc[train_indices]
+	X_test = XRaw.iloc[test_indices]
+	Y_train = YRaw.iloc[train_indices]
+	Y_test = YRaw.iloc[test_indices]
+	return X_train,X_test,Y_train,Y_test
+\end{lstlisting}
+\par main.creatTrainAndTest 完成了从硬盘当中读取的$\bf X $ 数据集分割为$\bf{X_{train}} $(下称$\bf{X}$)、$\bf{X_{test}}$ 两个数据集。
+
+\subsubsection{训练数据标准化}
+训练数据的标准化通过train.preprocess\_data 完成
+\par 将数据集$\bf{X}$ 求平均值:
+\[
+\bf{\overline{X}} =\bf{\overline{X}_{1 \times I}} = \begin{bmatrix}
+\frac{\sum_{j=1}^{J} x_{1}^{j}}{J}
+ \\ \frac{\sum_{j=1}^{J} x_{2}^{j}}{J}
+ \\\frac{\sum_{j=1}^{J} x_{3}^{j}}{J}
+\\\vdots
+\\\frac{\sum_{j=1}^{J} x_{I}^{j}}{J}
+
+\end{bmatrix} 
+\]
+求标准差：
+\[
+\boldsymbol{\sigma} = \boldsymbol{\sigma}_{I \times 1} = \begin{bmatrix}
+\sqrt{\frac{\sum_{j=1}^{J} \left(x_{1}^{j} - \overline{x}_{1}\right)^2}{J}} \\
+\sqrt{\frac{\sum_{j=1}^{J} \left(x_{2}^{j} - \overline{x}_{2}\right)^2}{J}} \\
+\sqrt{\frac{\sum_{j=1}^{J} \left(x_{3}^{j} - \overline{x}_{3}\right)^2}{J}} \\
+\vdots \\
+\sqrt{\frac{\sum_{j=1}^{J} \left(x_{I}^{j} - \overline{x}_{I}\right)^2}{J}}
+\end{bmatrix}
+\]
+
+于是我们可以对原数据$\bf{X}$及标准化:
+\[
+	\boldsymbol{X} := \begin{bmatrix}
+	\frac{x_{1}^{1} - \overline{x}_{1}}{\sigma_{1}} & \frac{x_{1}^{2} - \overline{x}_{1}}{\sigma_{1}} & \cdots & \frac{x_{1}^{J} - \overline{x}_{1}}{\sigma_{1}} \\
+	\frac{x_{2}^{1} - \overline{x}_{2}}{\sigma_{2}} & \frac{x_{2}^{2} - \overline{x}_{2}}{\sigma_{2}} & \cdots & \frac{x_{2}^{J} - \overline{x}_{2}}{\sigma_{2}} \\
+	\vdots & \vdots & \ddots & \vdots \\
+	\frac{x_{I}^{1} - \overline{x}_{I}}{\sigma_{I}} & \frac{x_{I}^{2} - \overline{x}_{I}}{\sigma_{I}} & \cdots & \frac{x_{I}^{J} - \overline{x}_{I}}{\sigma_{I}}
+	\end{bmatrix}
+\]
+
+随后我们对使用过海豹运算符后的$\bf{X}$进行处理，此时的数据集是已经被标准化的。
+\clearpage
+\subsubsection{处理掉所有的丢失值}
+
+这部分直接调用numpy的库函数可以完成。
+\begin{lstlisting}[
+  language=Python,         % 指定语法高亮的编程语言
+  caption={去除nan值},
+  label=lst:pre2,
+  frame=single,            % 添加单线边框
+  basicstyle=\small\ttfamily, % 设置字体为等宽小号字体
+  numbers=left,            % 显示行号
+  numberstyle=\tiny,       % 行号使用极小字体
+  backgroundcolor=\color{bg}, % 设置背景色
+  commentstyle=\color{commentcolor}\itshape, % 注释样式
+  keywordstyle=\color{keywordcolor}\bfseries, % 关键字样式
+  stringstyle=\color{stringcolor}, % 字符串样式
+  breaklines=true,         % 允许自动换行
+  showstringspaces=false   % 不显示字符串中的空格
+]
+def clear_nan(train_df):
+    train_df.dropna(inplace=True)
+    train_df.reset_index(drop=True, inplace=True)
+    print(train_df.head())
+    return train_df
+\end{lstlisting}
+
+
+\subsubsection{模型搭建}
+\par 本节基于梯度下降法，分别构建线性回归、岭回归与Lasso回归模型，核心参数更新逻辑如下：
+
+\paragraph{线性回归（Linear Regression）}
+线性回归通过最小化预测值与真实值的平方误差更新参数，无正则化项，具体步骤为：
+\begin{itemize}
+\item [1] 预测值计算：
+\[
+\hat{y} = X \cdot \theta
+\]
+其中，$X$ 为输入特征矩阵（含偏置项扩展），$\theta$ 为待优化参数向量，$\hat{y}$ 为模型预测输出。
+
+\item [2] 误差计算：
+\[
+e = \hat{y} - y
+\]
+其中，$y$ 为真实标签向量，$e$ 为预测值与真实值的误差向量。
+
+\item [3] 梯度计算：
+\[
+\nabla J(\theta) = \frac{1}{m} X^T \cdot e
+\]
+其中，$m$ 为样本数量，$\nabla J(\theta)$ 为损失函数对参数 $\theta$ 的梯度（反映参数更新方向）。
+
+\item [4] 参数更新：
+\[
+\theta = \theta - \eta \cdot \nabla J(\theta)
+\]
+其中，$\eta$ 为学习率（控制每次参数更新的步长）。
+
+\item [5] 收敛条件（满足其一即可终止迭代）：
+\[
+\|\nabla J(\theta)\| < 10^{-6} \quad \text{或} \quad \text{迭代次数} \geq \text{最大迭代次数}
+\]
+$\|\cdot\|$ 表示向量的L2范数，梯度范数小于 $10^{-6}$ 意味着参数更新已趋于稳定。
+\end{itemize}
+
+\paragraph{岭回归（Ridge Regression）}
+岭回归在普通线性回归基础上引入\textbf{L2正则化}，通过惩罚参数的平方项抑制过拟合，且不惩罚偏置项 $\theta_0$，参数更新步骤为：
+\begin{itemize}
+\item [1] 基础参数更新（同线性回归）：
+\[
+\theta_{\text{temp}} = \theta - \eta \cdot \nabla J(\theta)
+\]
+其中，$\theta_{\text{temp}}$ 为线性回归更新后的临时参数。
+
+\item [2] L2正则化修正（仅对非偏置项 $i \geq 1$ 生效）：
+\[
+\theta_i = \theta_{\text{temp},i} - \eta \cdot \alpha \cdot \theta_{\text{temp},i}
+\]
+其中，$\alpha$ 为正则化强度（$\alpha \geq 0$，值越大对参数的惩罚越强，参数越趋于平缓但不会归零），$\theta_{\text{temp},i}$ 为临时参数的第 $i$ 个分量。
+\end{itemize}
+
+\paragraph{Lasso回归（Lasso Regression）}
+Lasso回归引入\textbf{L1正则化}，通过惩罚参数的绝对值项实现特征选择（部分非重要参数会被压缩至0），同样不惩罚偏置项 $\theta_0$，参数更新步骤为：
+\begin{itemize}
+\item [1] 基础参数更新（同线性回归）：
+\[
+\theta_{\text{temp}} = \theta - \eta \cdot \nabla J(\theta)
+\]
+
+\item [2] L1正则化修正（仅对非偏置项 $i \geq 1$ 生效）：
+\[
+\theta_i = \theta_{\text{temp},i} - \eta \cdot \alpha \cdot \text{sign}(\theta_{\text{temp},i})
+\]
+其中，$\text{sign}(\cdot)$ 为符号函数（参数为正时返回1，为负时返回-1，为0时返回0），$\alpha$ 为正则化强度（$\alpha$ 越大，参数被压缩至0的概率越高，特征选择效果越明显）。
+\end{itemize}
+
+\paragraph{项目支持任意梯度的植入}
+想要加入新的梯度，只需要在train.py当中的对应列表加入这个回归方法的名字对应的字符串和函数指针即可。需要在这两个列表之前实现对应的函数。
+\begin{lstlisting}[
+  language=Python,         % 指定语法高亮的编程语言
+  caption={加入时需要调整的内容},
+  label=lst:pre3,
+  frame=single,            % 添加单线边框
+  basicstyle=\small\ttfamily, % 设置字体为等宽小号字体
+  numbers=left,            % 显示行号
+  numberstyle=\tiny,       % 行号使用极小字体
+  backgroundcolor=\color{bg}, % 设置背景色
+  commentstyle=\color{commentcolor}\itshape, % 注释样式
+  keywordstyle=\color{keywordcolor}\bfseries, % 关键字样式
+  stringstyle=\color{stringcolor}, % 字符串样式
+  breaklines=true,         % 允许自动换行
+  showstringspaces=false   % 不显示字符串中的空格
+]
+regression_choices=["linear_regression_train","ridge_regression_train","lasso_regression_train"]
+regression_functions=[linear_regression_train,ridge_regression_train,lasso_regression_train]
+\end{lstlisting}
