@@ -214,11 +214,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-*.aux
-*.log
-*.gz
-*.toc
-*.png
+
 
 document/expr1/
 !document/expr1/bib/
