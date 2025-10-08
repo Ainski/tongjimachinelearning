@@ -222,3 +222,5 @@ __marimo__/
 !/document/expr1/sections/
 !/document/expr1/style/
 !/document/expr1/main.tex
+*/.idea/
+*/.vscode/
